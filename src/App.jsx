@@ -26,6 +26,8 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [trendingMovies, setTrendingMovies] = useState([]);
+  const [isTrendingLoading, setIsTrendingLoading] = useState(false);
+  const [trendingError, setTrendingError] = useState('');
 
   // Debounce the search term to prevent making too many API requests
   // by waiting for the user to stop typing for 500ms
@@ -68,14 +70,18 @@ const App = () => {
   }
 
   const loadTrendingMovies = async () => {
-    try {
-      const movies = await getTrendingMovies();
-
-      setTrendingMovies(movies);
-    } catch (error) {
-      console.error(`Error fetching trending movies: ${error}`);
-    }
+  setIsTrendingLoading(true);
+  setTrendingError('');
+  try {
+    const movies = await getTrendingMovies();
+    setTrendingMovies(movies);
+  } catch (error) {
+    console.error(`Error fetching trending movies: ${error}`);
+    setTrendingError('Failed to load trending movies.');
+  } finally {
+    setIsTrendingLoading(false);
   }
+};
 
   useEffect(() => {
     fetchMovies(debouncedSearchTerm);
@@ -92,31 +98,39 @@ const App = () => {
       <div className="wrapper">
         <header>
           <img src="./hero.png" alt="Hero Banner" />
-          <h1>Find <span className="text-gradient">Movies</span> You'll Enjoy Without the Hassle</h1>
+          <h1>Find <span className="text-gradient">Movies</span> You Will Enjoy Without the Hassle</h1>
 
           <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </header>
 
-        {trendingMovies.length > 0 && (
-          <section className="trending">
-            <h2>Trending Movies</h2>
+<section className='trending'>
+  <h2>Trending Movies</h2>
 
-            <ul>
-              {trendingMovies.map((movie, index) => (
-                <li key={movie.$id}>
-                  <p>{index + 1}</p>
-                  <img src={movie.poster_url} alt={movie.title} />
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+  {isTrendingLoading ? (
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+      <Spinner />
+    </div>
+  ) : trendingError ? (
+    <p style={{ color: 'red' }}>{trendingError}</p>
+  ) : (
+    <ul>
+      {trendingMovies.map((movie, index) => (
+        <li key={movie.$id}>
+          <p>{index + 1}</p>
+          <img src={movie.poster_url} alt={movie.title} />
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
 
-        <section className="all-movies">
+<section className="all-movies">
           <h2>All Movies</h2>
 
           {isLoading ? (
-            <Spinner />
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+              <Spinner />
+            </div>
           ) : errorMessage ? (
             <p className="text-red-500">{errorMessage}</p>
           ) : (
@@ -130,6 +144,6 @@ const App = () => {
       </div>
     </main>
   )
-}
+}       
 
 export default App
